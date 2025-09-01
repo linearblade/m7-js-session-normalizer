@@ -20,8 +20,8 @@ Each key links to a detailed contract describing its shape and usage.
 
 | Key      | Type   | Description                        | Spec Link              |
 | -------- | ------ | ---------------------------------- | ---------------------- |
-| `login`  | object | Defines login flow (fn, redirect)  | [session/LOGIN.md](LOGIN.md)   |
-| `logout` | object | Defines logout flow (fn, redirect) | [session/LOGOUT.md](LOGOUT.md) |
+| `login`  | object | Defines login flow (fn, redirect)  | [LOGIN.md](./session/LOGIN.md)   |
+| `logout` | object | Defines logout flow (fn, redirect) | [LOGOUT.md](./session/LOGOUT.md) |
 
 ---
 
