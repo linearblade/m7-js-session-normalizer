@@ -68,10 +68,11 @@ For complete configuration details, see [docs/contracts/OVERVIEW.md](./docs/cont
 
 ```html
 <script type="module">
-  import SessionFactory from './vendor/m7-js-session-normalizer/src/index.js';
-  import MockSession from './vendor/m7-js-session-normalizer/config/mock-session.js';
-
-  const session = SessionFactory(shell.net, MockSession);
+  import Net                  from './vendor/m7Fetch/src/index.js';
+  import SessionFactory       from './vendor/m7-js-session-normalizer/src/index.js';
+  import MockSession          from './vendor/m7-js-session-normalizer/config/mock-session.js';
+  const net = new Net({absolute:true});
+  const session = SessionFactory(net, MockSession);
 
   if (await session.getSession()) {
     console.log(session.getUser());
@@ -88,10 +89,11 @@ If you want to try PHP cookie-based auth, copy the **examples/php-auth/** folder
 
 ```html
 <script type="module">
-  import SessionFactory from './vendor/m7-js-session-normalizer/src/index.js';
-  import phpSession from './vendor/m7-js-session-normalizer/config/cookie-php-session.js';
-
-  const session = SessionFactory(shell.net, phpSession);
+  import Net                  from './vendor/m7Fetch/src/index.js';
+  import SessionFactory       from './vendor/m7-js-session-normalizer/src/index.js';
+  import phpSession           from './vendor/m7-js-session-normalizer/config/cookie-php-session.js';
+  const net = new Net({absolute:true});
+  const session = SessionFactory(net, phpSession);
 
   if (await session.getSession()) {
     console.log(session.getUser());
