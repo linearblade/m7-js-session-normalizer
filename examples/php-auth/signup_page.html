@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<!--
+    - Copyright (c) 2025 m7.org
+    - License: MTL-10 (see LICENSE.md)
+ -->
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Signup</title>
+    <style>
+      body { font-family: sans-serif; padding: 20px; }
+      label { display:block; margin: 10px 0 5px; }
+      input { width: 100%; padding: 6px; }
+      button { margin-top: 15px; padding: 8px 12px; }
+    </style>
+  </head>
+  <body>
+    <h2>Signup</h2>
+    <form id="signupForm">
+      <label>Username</label>
+      <input type="text" name="username" required />
+
+      <label>Email</label>
+      <input type="email" name="email" required />
+
+      <label>Password</label>
+      <input type="password" name="password" required />
+
+      <button type="submit">Create Account</button>
+    </form>
+
+    <script>
+      document.getElementById('signupForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const username = this.username.value;
+        const email = this.email.value;
+        const password = this.password.value;
+
+        try {
+          const res = await fetch('/api/auth/signup.php', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+          });
+
+          const data = await res.json();
+
+          if (res.ok && data.ok) {
+            // Notify parent
+            window.opener.postMessage({
+              type: 'signupSuccess',
+              user: data.user
+            }, '*');
+
+            // Close popup
+            window.close();
+          } else {
+            alert(data.error || 'Signup failed');
+          }
+        } catch (err) {
+          console.error('Signup error', err);
+          alert('Signup request failed');
+        }
+      });
+    </script>
+  </body>
+</html>

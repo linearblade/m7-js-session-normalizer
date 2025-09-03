@@ -13,49 +13,76 @@ export class SessionProvider{
 	this.user = null;
 	this.validated = options?.default_validated === true?true:false;
     }
-    /**
-     * Perform a login action.
-     * @param {object} credentials Optional login data (username/password, token, etc.)
-     * @returns {Promise<User>} Resolves with user object on success.
-     */
-    async login(credentials = {}) {
-	const loginCfg = this.options.login;
 
-	if (!loginCfg) {
-	    throw new Error("Login config not defined for this provider.");
+
+    async signup(ctx, credentials = {}) {
+	return this._delegateAction('signup', ctx, credentials);
+    }
+    async login(ctx, credentials = {}) {
+	return this._delegateAction('login', ctx, credentials);
+    }
+
+    async profile(ctx, data = null) {
+	return this._delegateAction('profile', ctx, data);
+	//not sure this will work the way I want it yet.
+	if (data) {
+	    // Update profile
+	    return this._delegate('profile.update', ctx, data);
+	} else {
+	    // Fetch profile
+	    return this._delegate('profile.get', ctx);
 	}
-
-	// String shorthand = redirect
-	if (typeof loginCfg === "string") {
-	    window.location.href = loginCfg;
-	    return;
-	}
-
-	// Redirect type
-	if (loginCfg.type === "redirect") {
-	    const url = loginCfg.url;
-	    // TODO: if args/credentials exist, append them as query or form
-	    window.location.href = url;
-	    return;
-	}
-
-	// Function type
-	if (loginCfg.type === "fn") {
-	    const fn = this.getFunction(loginCfg.fn);
-	    if (!fn) throw new Error("Login function not defined.");
-	    return fn({ controller: this, options: this.options }, {
-		...loginCfg.args,
-		...credentials
-	    });
-	}
-
-	throw new Error(`Unknown login type: ${loginCfg.type}`);
     }
 
     /**
+     * Generic delegate for session actions (login, signup, profile, etc.) - logout differs slightly, has its own function
+     * @param {string} action - Action key in config (e.g. "login", "signup").
+     * @param {object} args   - Arguments to pass (credentials, payload, etc.)
+     * @returns {Promise<any>}
+     */
+    async _delegateAction(action, args = {}) {
+	const cfg = this.options[action];
+
+	if (!cfg) {
+            throw new Error(`${action} config not defined for this provider.`);
+	}
+
+	// String shorthand → redirect
+	if (typeof cfg === "string") {
+            window.location.href = cfg;
+            return;
+	}
+
+	// Explicit redirect type
+	if (cfg.type === "redirect") {
+            const url = cfg.url;
+            // TODO: if args exist, append as querystring or form post
+            window.location.href = url;
+            return;
+	}
+
+	// Function type
+	if (cfg.type === "fn") {
+            const fn = this.getFunction(cfg.fn);
+            if (!fn) throw new Error(`${action} function not defined.`);
+            return fn(
+		{ controller: this, options: this.options },
+		{ ...cfg.args, ...args }
+            );
+	}
+
+	throw new Error(`Unknown ${action} type: ${cfg.type}`);
+    }
+
+    
+    /**
      * Perform a logout action.
      * @returns {Promise<void>} Resolves when complete.
+     * // NOTE: logout intentionally does not use _delegateAction.
+     * // Reason: logout must always clear local session state, while other actions
+     * // (login/signup/profile) only set state if successful.
      */
+
     async logout(args = {}) {
 	const logoutCfg = this.options.logout;
 
