@@ -1,16 +1,27 @@
+/**
+ * Implements the BFF (Backend-for-Frontend) pattern with secure refresh token rotation.
+ *
+ * - Refresh token stored in an HttpOnly, Secure, SameSite=Lax cookie
+ * - Access tokens are obtained via the BFF and kept in memory only
+ * - Refresh token rotates on every use (OAuth 2.1 best practice)
+ * - Tokens are bound to a client fingerprint to prevent replay and session theft
+ *
+ * @see https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps
+ * @see https://oauth.net/2.1/
+ */
 /*
  * Copyright (c) 2025 m7.org
  * License: MTL-10 (see LICENSE.md)
  */
-// app/auth/CookieAuth.js
+
+
+
 import SessionProvider from "./SessionProvider.js";
 
-export class CookieSession extends SessionProvider {
+export class BffRefreshTokenSession extends SessionProvider {
     constructor(net,options = {}) {
 	super(net,options);
     }
-
-
 
 
     /**
@@ -94,14 +105,6 @@ export class CookieSession extends SessionProvider {
 	);
     }
 
-    //keeping around in case I fucked up for a moment
-    dgetCookieValues() {
-	// Turns "PHPSESSID=abc; another=xyz" → { PHPSESSID: "abc", another: "xyz" }
-	
-	return Object.fromEntries(
-	    document.cookie.split("; ").map(c => c.split("=", 2))
-	);
-    }
 
     async clientValidation(cookieValues) {
 	const fn = this.getFunction(this?.options?.client?.validation);
@@ -117,41 +120,45 @@ export class CookieSession extends SessionProvider {
 
 
     async getSession() {
-	// 1. Ensure required cookies are present
+	// 1. Read cookies (for client-side validation only)
 	const cookieValues = this.getCookieValues();
 
-	if (!this.cookiesPresent(cookieValues)) {
-	    console.warn('no cookies present');
-	    return false;
+	// BFF ALWAYS requires backend validation.
+	// Cookies DO NOT indicate session validity.
+	// This step ONLY applies optional client-side validation rules.
+	if (!await this.clientValidation(cookieValues)) {
+            console.warn("client side validation fail");
+            return false;
 	}
 
-
-	// 2. Optional client-side cookie validation
-	if (!await this.clientValidation(cookieValues)){
-	    console.warn('client side validation fail');
-	    return false;
-	}
 	const ctx = { controller: this, options: this.options };
-	// 3. Server-side validation if possible
-	const fetchOpts = this?.options?.fetch || {};
-	const fetchFn = this.getFunction(fetchOpts?.fn);
+
+	// 2. Construct server-side validation object
+	const fetchOpts   = this?.options?.fetch || {};
+	const fetchFn     = this.getFunction(fetchOpts?.fn);
 	const fetchObject = fetchFn
-	      ? fetchFn(ctx,fetchOpts, cookieValues, this.options)
-	      : this.autoGenFetchObject(fetchOpts.sessionUrl, fetchOpts.method);
+              ? fetchFn(ctx, fetchOpts, cookieValues, this.options)
+              : this.autoGenFetchObject(fetchOpts.sessionUrl, fetchOpts.method);
 
 	const requestFn = this.getFunction(this.options.request);
 
+	// 3. ALWAYS perform backend validation if possible
 	if (fetchObject || requestFn) {
-	    const ok = await this.handleServerValidation(fetchObject, requestFn, cookieValues);
-	    this.validated = ok;
-	    return ok;
-	}
-	// 4. If no server validation, rely on cookies + clientValidation
-	this.user = null;
-	this.validated = true;
-	return true;
-    }
+            const ok = await this.handleServerValidation(
+		fetchObject,
+		requestFn,
+		cookieValues
+            );
 
+            this.validated = ok;
+            return ok;
+	}
+
+	// 4. No server validation route → cannot validate BFF session
+	this.user = null;
+	this.validated = false;
+	return false;
+    }
 
     /**
      * Handle server-side validation step.

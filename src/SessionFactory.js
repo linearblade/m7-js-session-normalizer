@@ -5,12 +5,15 @@
 // SessionFactory.js
 import { CookieSession }  from "./providers/CookieSession.js";
 import { MockSession }    from "./providers/MockSession.js";
+import { BffRefreshTokenSession} from "./BffRefreshTokenSession.js";
 //import { OAuthSession } from "./providers/OAuthSession.js";
 
 export function SessionFactory(net, config) {
     const { provider, ...options } = config ?? {};
     
     switch (provider) {
+    case "bff" :
+	return new BffRefreshTokenSession(net,options);
     case "cookie":
 	return new CookieSession(net, options);
     //case "oauth":
