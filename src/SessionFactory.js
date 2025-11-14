@@ -5,7 +5,7 @@
 // SessionFactory.js
 import { CookieSession }  from "./providers/CookieSession.js";
 import { MockSession }    from "./providers/MockSession.js";
-import { BffRefreshTokenSession} from "./BffRefreshTokenSession.js";
+import { BffRefreshTokenSession} from "./providers/BffRefreshTokenSession.js";
 //import { OAuthSession } from "./providers/OAuthSession.js";
 
 export function SessionFactory(net, config) {
