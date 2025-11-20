@@ -264,4 +264,4 @@ export class BffRefreshTokenSession extends SessionProvider {
 }
 
 
-export default CookieSession;
+export default BffRefreshTokenSession;

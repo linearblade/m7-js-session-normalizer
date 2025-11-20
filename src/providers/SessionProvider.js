@@ -25,13 +25,14 @@ export class SessionProvider{
     async profile(ctx, data = null) {
 	return this._delegateAction('profile', ctx, data);
 	//not sure this will work the way I want it yet.
+	/*
 	if (data) {
 	    // Update profile
 	    return this._delegate('profile.update', ctx, data);
 	} else {
 	    // Fetch profile
 	    return this._delegate('profile.get', ctx);
-	}
+	}*/
     }
 
     /**
